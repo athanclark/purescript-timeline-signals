@@ -8,7 +8,6 @@ You can edit this file as you like.
   , "effect"
   , "psci-support"
   , "spec"
-  , "timeline-identifiers"
   , "timeline-view"
   , "zeta-array"
   , "zeta-mapping"

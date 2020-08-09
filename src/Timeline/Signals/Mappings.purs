@@ -41,6 +41,9 @@ getEventsMapping (Mappings {events}) = events
 getTimeSpansMapping :: Mappings -> IxSignalMap TimeSpanID ( read :: S.READ, write :: S.WRITE ) UI.TimeSpan
 getTimeSpansMapping (Mappings {timeSpans}) = timeSpans
 
+getRootRef :: Mappings -> Ref (Maybe TimeSpaceID)
+getRootRef (Mappings {root}) = root
+
 new :: Effect Mappings
 new = do
   timeSpaces <- IxSignalMap.new { fromString: unsafeCoerce, toString: unsafeCoerce }

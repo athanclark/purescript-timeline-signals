@@ -7,6 +7,7 @@ You can edit this file as you like.
   [ "console"
   , "effect"
   , "psci-support"
+  , "spec"
   , "timeline-identifiers"
   , "timeline-view"
   , "zeta-array"

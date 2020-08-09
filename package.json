@@ -1,0 +1,22 @@
+{
+  "name": "purescript-timeline-signals",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "spago test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/openchronology/purescript-timeline-signals.git"
+  },
+  "author": "Athan Clark <athan.clark@gmail.com>",
+  "license": "AGPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/openchronology/purescript-timeline-signals/issues"
+  },
+  "homepage": "https://github.com/openchronology/purescript-timeline-signals#readme"
+}

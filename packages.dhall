@@ -134,7 +134,7 @@ let additions =
   { timeline-identifiers =
     { dependencies = ["sized-vectors", "arraybuffer-class", "uuid"]
     , repo = "https://github.com/openchronology/purescript-timeline-identifiers.git"
-    , version = "v0.0.0-rc1"
+    , version = "v0.0.0-rc3"
     }
   , timeline-time =
     { dependencies = [ "arraybuffer-class", "argonaut" ]

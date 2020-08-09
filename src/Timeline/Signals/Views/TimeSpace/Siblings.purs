@@ -1,4 +1,4 @@
-module Timeline.Signals.Views.Siblings where
+module Timeline.Signals.Views.TimeSpace.Siblings where
 
 import Timeline.Signals.Views.TimeSpace (getCurrentTimeSpace, getCurrentTimeSpaceID)
 import Timeline.Signals.Mappings.EventsOrTimeSpans (getEventOrTimeSpanScoped)
@@ -75,3 +75,46 @@ newSiblingsSignal { timeSpacesMapping, eventsMapping, timeSpansMapping, timeSpac
             IxSignalUniqueArray.overwriteExcept [ "SiblingsSignal" ] siblings sig
   IxSignalMap.subscribeLight "SiblingsSignal" handleTimeSpacesMappingUpdate timeSpacesMapping
   pure sig
+
+
+-- FIXME figure out this caching stuff
+
+-- localstorageSignalKey :: String
+-- localstorageSignalKey = "localstorage"
+
+-- localstorageKey :: String
+-- localstorageKey = "Siblings"
+
+-- -- TODO predicate from top-level index, and seek from selected time space.
+-- newSiblingsSignal ::
+--   { settingsSignal :: IxSignal ( read :: S.READ ) Settings
+--   , initialSiblings :: Siblings
+--   } ->
+--   Effect (IxSignal ( read :: S.READ, write :: S.WRITE ) Siblings)
+-- newSiblingsSignal { settingsSignal, initialSiblings } = do
+--   store <- window >>= localStorage
+--   mItem <- getItem localstorageKey store
+--   item <- case mItem of
+--     Nothing -> pure initialSiblings
+--     Just s -> case parseJson s >>= decodeJson of
+--       Left e -> throw $ "Couldn't parse Siblings: " <> show e
+--       Right x -> pure x
+--   sig <- make item
+--   let
+--     handler x = do
+--       Settings { localCacheTilExport } <- get settingsSignal
+--       when localCacheTilExport
+--         $ setItem localstorageKey (stringify (encodeJson x)) store
+--   subscribeDiffLight localstorageSignalKey handler sig
+--   pure sig
+
+-- clearSiblingsCache :: Effect Unit
+-- clearSiblingsCache = do
+--   store <- window >>= localStorage
+--   removeItem localstorageKey store
+
+-- setNewDocumentSiblings ::
+--   IxSignal ( write :: S.WRITE ) Siblings ->
+--   Effect Unit
+-- setNewDocumentSiblings siblingsSignal = set (Siblings []) siblingsSignal
+

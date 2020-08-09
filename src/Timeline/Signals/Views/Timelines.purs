@@ -81,9 +81,9 @@ writeOnTimelineMappingUpdate { sig, timelinesMapping, timeSpaceSignal } = do
     handleTimelineMappingUpdate :: Tuple TimelineID (MapUpdate Timeline) -> Effect Unit
     handleTimelineMappingUpdate (Tuple timelineID updatedTimeline) = do
       case updatedTimeline of
-        MapInsert { valueNew: timeline@(Timeline { timeSpace }) } -> do
+        MapInsert { valueNew: timeline@(Timeline { parent }) } -> do
           TimeSpace { id: currentTimeSpaceID } <- IxSignal.get timeSpaceSignal
-          if timeSpace /= currentTimeSpaceID then
+          if parent /= Just currentTimeSpaceID then
             pure unit
           else do
             _ <- IxSignalUniqueArray.appendExcept [ "TimelinesSignal" ] timeline sig

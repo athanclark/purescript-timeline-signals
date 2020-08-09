@@ -66,16 +66,30 @@ new = do
     handleTimelinesMappingUpdate :: Tuple TimelineID (MapUpdate UI.Timeline) -> Effect Unit
     handleTimelinesMappingUpdate (Tuple id mapUpdate) = case mapUpdate of
       -- FIXME children should already exist, and if not, they will by the time lookups happen
-      MapInsert { valueNew: UI.Timeline { timeSpace } } -> void (appendTimelineScopedExcept [ "UISets" ] id timeSpace timeSpaces)
-      MapUpdate { valueOld: UI.Timeline { children: childrenOld, timeSpace: timeSpaceOld }, valueNew: UI.Timeline { children: childrenNew, timeSpace: timeSpaceNew } } ->
-        -- Implements movement of self, FIXME ignores children's parent references
-        if timeSpaceOld == timeSpaceNew then
-          pure unit
-        else do
-          void (removeTimelineScopedExcept [ "UISets" ] id timeSpaceOld timeSpaces)
-          void (appendTimelineScopedExcept [ "UISets" ] id timeSpaceNew timeSpaces)
+      MapInsert { valueNew: UI.Timeline { parent } } -> case parent of
+        -- Do nothing when there's no parent reference in the timeline
+        Nothing -> pure unit
+        Just parent' -> void (appendTimelineScopedExcept [ "UISets" ] id parent' timeSpaces)
+      MapUpdate
+        { valueOld: UI.Timeline { children: childrenOld, parent: timeSpaceOld }
+        , valueNew: UI.Timeline { children: childrenNew, parent: timeSpaceNew }
+        } ->
+        -- Implements movement of self
+        case Tuple timeSpaceOld timeSpaceNew of
+          Tuple Nothing Nothing -> pure unit
+          Tuple (Just timeSpaceOld') (Just timeSpaceNew')
+            | timeSpaceOld' == timeSpaceNew' -> pure unit
+            | otherwise -> do
+            void (removeTimelineScopedExcept [ "UISets" ] id timeSpaceOld' timeSpaces)
+            void (appendTimelineScopedExcept [ "UISets" ] id timeSpaceNew' timeSpaces)
+          Tuple Nothing (Just timeSpaceNew') ->
+            void (appendTimelineScopedExcept [ "UISets" ] id timeSpaceNew' timeSpaces)
+          Tuple (Just timeSpaceOld') Nothing ->
+            void (removeTimelineScopedExcept [ "UISets" ] id timeSpaceOld' timeSpaces)
       -- removes self from parent
-      MapDelete { valueOld: UI.Timeline { timeSpace } } -> void (removeTimelineScopedExcept [ "UISets" ] id timeSpace timeSpaces)
+      MapDelete { valueOld: UI.Timeline { parent } } -> case parent of
+        Nothing -> pure unit
+        Just parent' -> void (removeTimelineScopedExcept [ "UISets" ] id parent' timeSpaces)
   -- FIXME finish rest of mapping updates
   root <- Ref.new Nothing
   pure

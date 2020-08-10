@@ -48,6 +48,8 @@ getCurrentTimeSpace { timeSpaceSelectedSignal, rootRef, timeSpacesMapping } = do
     Left e -> throw $ "Cannot getTimeSpaceScoped - error: " <> show e -- FIXME format errors
     Right x -> pure x
 
+-- TODO decouple and format like Timeline.Signals.Views.Timelines
+
 -- | Create the "viewed time space" signal on boot, where the initial
 -- | time space is synthesized by `UISets`.
 newTimeSpaceSignal ::
@@ -65,6 +67,7 @@ newTimeSpaceSignal { timeSpacesMapping, timeSpaceSelectedSignal, rootRef } = do
       }
   sig <- IxSignal.make currentTimeSpace
   let
+    -- Fires whenever we need to reset the most up-to-date timeSpace
     getNewTimeSpace :: Effect Unit
     getNewTimeSpace = do
       newTimeSpace <-
@@ -74,24 +77,39 @@ newTimeSpaceSignal { timeSpacesMapping, timeSpaceSelectedSignal, rootRef } = do
           , rootRef
           }
       IxSignal.setExcept [ "TimeSpaceSignal" ] newTimeSpace sig
+
+  -- Get the latest signal whenever the selected signal changes (via explore timeSpaces)
   IxSignal.subscribeLight "TimeSpaceSignal" (const getNewTimeSpace) timeSpaceSelectedSignal
   let
+    -- Fires whenever an update happens to the timeSpaces mapping database
     handleMappingUpdate :: Tuple TimeSpaceID (MapUpdate TimeSpace) -> Effect Unit
     handleMappingUpdate (Tuple updatedTimeSpaceID updatedTimeSpace) = do
       currentTimeSpaceID <- getCurrentTimeSpaceID { timeSpaceSelectedSignal, rootRef }
       if currentTimeSpaceID /= updatedTimeSpaceID then
+        -- Not the one being viewed, don't do anything
         pure unit
       else case updatedTimeSpace of
-        -- FIXME weird predicament (same ID, but not tracking it?) but okay
+        -- Strange case where we're viewing the timeSpace before it was added to the database...
+        -- it's safe to just re-set our view of the timeSpace, just to be sure we have the most
+        -- up-to-date version.
         MapInsert { valueNew } -> IxSignal.setExcept [ "TimeSpaceSignal" ] valueNew sig
+
+        -- Updated the one we're viewing - this is the most important case to consider.
         MapUpdate { valueNew } -> IxSignal.setExcept [ "TimeSpaceSignal" ] valueNew sig
-        -- FIXME Uhhhhh.... should I just wait? Or should I navigate to a higher timeSpace? FIXME what if root gets deleted while viewing it?
+
+        -- Strange case where the timeSpace we're currently viewing just got deleted.
+        -- FIXME Should we just wait and continue viewing the fragmented data?
+        -- Or should we navigate to a higher timeSpace?
+        -- FIXME what if root gets deleted while viewing it?
         MapDelete _ -> pure unit
   IxSignalMap.subscribeLight "TimeSpaceSignal" handleMappingUpdate timeSpacesMapping
-  -- Overwrite existing time space in set when viewed updates
+
   let
+    -- Overwrite the already existing timeSpace in the database when the viewed one updates -
+    -- i.e., when the user modifies it in the user interface.
     handleSelfUpdate :: TimeSpace -> Effect Unit
     handleSelfUpdate timeSpace = addTimeSpaceForceScopedExcept [ "TimeSpaceSignal" ] timeSpace (S.writeOnly timeSpacesMapping)
   -- FIXME dereference Timelines and Siblings when necessary
   IxSignal.subscribeLight "TimeSpaceSignal" handleSelfUpdate sig
+
   pure sig

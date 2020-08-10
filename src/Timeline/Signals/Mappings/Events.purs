@@ -11,14 +11,14 @@ import Zeta.Types (READ, WRITE) as S
 import IxZeta.Map (IxSignalMap)
 import IxZeta.Map (insert, get) as IxSignalMap
 
-addEventScoped :: Event -> IxSignalMap EventID ( write :: S.WRITE ) Event -> Effect (Either PopulateError Unit)
+addEventScoped :: Event -> IxSignalMap EventID ( write :: S.WRITE ) Event -> Effect (Maybe PopulateError)
 addEventScoped x@(Event { id }) events = do
   succeeded <- IxSignalMap.insert id x events
   pure
     $ if succeeded then
-        Right unit
+        Nothing
       else
-        Left (EventExists x)
+        Just (EventExists x)
 
 getEventScoped :: EventID -> IxSignalMap EventID ( read :: S.READ ) Event -> Effect (Either SynthesizeError Event)
 getEventScoped id events = do

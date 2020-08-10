@@ -11,14 +11,14 @@ import Zeta.Types (READ, WRITE) as S
 import IxZeta.Map (IxSignalMap)
 import IxZeta.Map (insert, get) as IxSignalMap
 
-addTimelineScoped :: Timeline -> IxSignalMap TimelineID ( write :: S.WRITE ) Timeline -> Effect (Either PopulateError Unit)
+addTimelineScoped :: Timeline -> IxSignalMap TimelineID ( write :: S.WRITE ) Timeline -> Effect (Maybe PopulateError)
 addTimelineScoped x@(Timeline { id }) timelines = do
   succeeded <- IxSignalMap.insert id x timelines
   pure
     $ if succeeded then
-        Right unit
+        Nothing
       else
-        Left (TimelineExists x)
+        Just (TimelineExists x)
 
 getTimelineScoped :: TimelineID -> IxSignalMap TimelineID ( read :: S.READ ) Timeline -> Effect (Either SynthesizeError Timeline)
 getTimelineScoped id timelines = do

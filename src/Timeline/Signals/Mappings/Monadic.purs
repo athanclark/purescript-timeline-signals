@@ -30,7 +30,7 @@ import Effect.Class (class MonadEffect, liftEffect)
 import Zeta.Types (readOnly, writeOnly) as S
 import IxZeta.Map (assign) as IxSignalMap
 
-
+-- | Builder / Reader monad - to be used to either build a mapping from a document, or a document from a mapping.
 newtype MappingsM e a
   = MappingsM (ReaderT Mappings (ExceptT e Effect) a)
 
@@ -75,7 +75,7 @@ asMappingsM' fromMappings f = do
 
 -- | Includes an already flat time space - doesn't verify constituents
 addTimeSpace :: UI.TimeSpace -> MappingsM PopulateError Unit
-addTimeSpace = asMappingsM (S.writeOnly <<< getTimeSpacesMapping) addTimeSpaceScoped
+addTimeSpace = asMappingsM (S.writeOnly <<< getTimeSpacesMapping) (\p q -> maybeToEither <$> addTimeSpaceScoped p q)
 
 -- | Doesn't fail when existing - just re-assigns
 addTimeSpaceForce :: UI.TimeSpace -> Mappings -> Effect Unit
@@ -87,7 +87,7 @@ getTimeSpace = asMappingsM (S.readOnly <<< getTimeSpacesMapping) getTimeSpaceSco
 
 -- | Includes an already flat timeline - doesn't verify constituents
 addTimeline :: UI.Timeline -> MappingsM PopulateError Unit
-addTimeline = asMappingsM (S.writeOnly <<< getTimelinesMapping) addTimelineScoped
+addTimeline = asMappingsM (S.writeOnly <<< getTimelinesMapping) (\p q -> maybeToEither <$> addTimelineScoped p q)
 
 addTimelineForce :: UI.Timeline -> Mappings -> Effect Unit
 addTimelineForce x@(UI.Timeline { id }) (Mappings { timelines }) = IxSignalMap.assign id x timelines
@@ -98,7 +98,7 @@ getTimeline = asMappingsM (S.readOnly <<< getTimelinesMapping) getTimelineScoped
 
 -- | Includes an already flat event as a sibling - doesn't verify constituents
 addEvent :: UI.Event -> MappingsM PopulateError Unit
-addEvent = asMappingsM (S.writeOnly <<< getEventsMapping) addEventScoped
+addEvent = asMappingsM (S.writeOnly <<< getEventsMapping) (\p q -> maybeToEither <$> addEventScoped p q)
 
 addEventForce :: UI.Event -> Mappings -> Effect Unit
 addEventForce x@(UI.Event { id }) (Mappings { events }) = IxSignalMap.assign id x events
@@ -109,7 +109,7 @@ getEvent = asMappingsM (S.readOnly <<< getEventsMapping) getEventScoped
 
 -- | Includes an already flat time span as a sibling - doesn't verify constituents
 addTimeSpan :: UI.TimeSpan -> MappingsM PopulateError Unit
-addTimeSpan = asMappingsM (S.writeOnly <<< getTimeSpansMapping) addTimeSpanScoped
+addTimeSpan = asMappingsM (S.writeOnly <<< getTimeSpansMapping) (\p q -> maybeToEither <$> addTimeSpanScoped p q)
 
 addTimeSpanForce :: UI.TimeSpan -> Mappings -> Effect Unit
 addTimeSpanForce x@(UI.TimeSpan { id }) (Mappings { timeSpans }) = IxSignalMap.assign id x timeSpans
@@ -131,3 +131,9 @@ setRoot id (Mappings { root }) = Ref.write (Just id) root
 
 getRoot :: Mappings -> Effect (Maybe TimeSpaceID)
 getRoot (Mappings { root }) = Ref.read root
+
+-- | Helper for shmoozing types to work with MappingsM
+maybeToEither :: forall e. Maybe e -> Either e Unit
+maybeToEither mX = case mX of
+  Nothing -> Right unit
+  Just e -> Left e

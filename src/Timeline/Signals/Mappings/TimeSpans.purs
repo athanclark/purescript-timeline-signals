@@ -11,14 +11,14 @@ import Zeta.Types (READ, WRITE) as S
 import IxZeta.Map (IxSignalMap)
 import IxZeta.Map (insert, get) as IxSignalMap
 
-addTimeSpanScoped :: TimeSpan -> IxSignalMap TimeSpanID ( write :: S.WRITE ) TimeSpan -> Effect (Either PopulateError Unit)
+addTimeSpanScoped :: TimeSpan -> IxSignalMap TimeSpanID ( write :: S.WRITE ) TimeSpan -> Effect (Maybe PopulateError)
 addTimeSpanScoped x@(TimeSpan { id }) timeSpans = do
   succeeded <- IxSignalMap.insert id x timeSpans
   pure
     $ if succeeded then
-        Right unit
+        Nothing
       else
-        Left (TimeSpanExists x)
+        Just (TimeSpanExists x)
 
 getTimeSpanScoped :: TimeSpanID -> IxSignalMap TimeSpanID ( read :: S.READ ) TimeSpan -> Effect (Either SynthesizeError TimeSpan)
 getTimeSpanScoped id timeSpans = do

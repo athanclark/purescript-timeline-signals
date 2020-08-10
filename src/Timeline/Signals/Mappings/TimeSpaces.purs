@@ -15,14 +15,14 @@ import Zeta.Types (READ, WRITE) as S
 import IxZeta.Map (IxSignalMap)
 import IxZeta.Map (insert, get, assign, assignExcept) as IxSignalMap
 
-addTimeSpaceScoped :: TimeSpace -> IxSignalMap TimeSpaceID ( write :: S.WRITE ) TimeSpace -> Effect (Either PopulateError Unit)
+addTimeSpaceScoped :: TimeSpace -> IxSignalMap TimeSpaceID ( write :: S.WRITE ) TimeSpace -> Effect (Maybe PopulateError)
 addTimeSpaceScoped x@(TimeSpace { id }) timeSpaces = do
   succeeded <- IxSignalMap.insert id x timeSpaces
   pure
     $ if succeeded then
-        Right unit
+        Nothing
       else
-        Left (TimeSpaceExists x)
+        Just (TimeSpaceExists x)
 
 addTimeSpaceForceScoped :: TimeSpace -> IxSignalMap TimeSpaceID ( write :: S.WRITE ) TimeSpace -> Effect Unit
 addTimeSpaceForceScoped x@(TimeSpace { id }) timeSpaces = IxSignalMap.assign id x timeSpaces
